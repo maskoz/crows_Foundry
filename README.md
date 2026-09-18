@@ -1,5 +1,4 @@
-# Project Dead
-> I use AI in the coding of my module but not artwork but that is still against [MCDM Content Policy](https://docs.google.com/document/d/e/2PACX-1vRpTRbJ-YF9j134cjsSe7-p1E6VM44Xi9kIeIfLxtE9VCJBU6Ho-c2FdPKb71s-A4SpuJZRY4-JFgSm/pub) so no point working on this anymore
+Personal work on Crows for Foundry. 
 
 # MCDM Crows — Foundry VTT System
 
