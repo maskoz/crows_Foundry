@@ -11,11 +11,15 @@
     {
       "name": "dimit",
       "url": "https://github.com/DimitroffVodka"
+    },
+    {
+      "name": "maskoz",
+      "url": "https://github.com/maskoz"
     }
   ],
-  "url": "https://github.com/DimitroffVodka/crows_playtest",
-  "manifest": "https://github.com/DimitroffVodka/crows_playtest/releases/latest/download/system.json",
-  "download": "https://github.com/DimitroffVodka/crows_playtest/releases/latest/download/crows.zip",
+  "url": "https://github.com/maskoz/crows_Foundry",
+  "manifest": "https://raw.githubusercontent.com/maskoz/crows_Foundry/master/system.json",
+  "download": "https://github.com/maskoz/crows_Foundry/releases/latest/download/crows.zip",
   "esmodules": [
     "module/crows.mjs"
   ],
