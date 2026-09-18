@@ -1,0 +1,45 @@
+name: Release
+
+# Creates a GitHub Release with a crows.zip whenever a version tag is pushed.
+# Tag format: v0.2.3  (must match the version in system.json)
+#
+# To cut a release:
+#   git tag v0.2.3 && git push origin v0.2.3
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build crows.zip
+        run: |
+          set -euo pipefail
+          # Exclude dev-only files from the zip.
+          zip -r crows.zip . \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude ".planning/*" \
+            --exclude "src/*" \
+            --exclude "test/*" \
+            --exclude "demo/*" \
+            --exclude "docs/*" \
+            --exclude "node_modules/*" \
+            --exclude "*.test.mjs" \
+            --exclude "package*.json" \
+            --exclude ".eslintrc*" \
+            --exclude ".gitignore"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: crows.zip
+          generate_release_notes: true

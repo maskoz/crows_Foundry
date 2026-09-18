@@ -19,7 +19,7 @@
   ],
   "url": "https://github.com/maskoz/crows_Foundry",
   "manifest": "https://raw.githubusercontent.com/maskoz/crows_Foundry/master/system.json",
-  "download": "https://github.com/maskoz/crows_Foundry/archive/refs/heads/master.zip",
+  "download": "https://github.com/maskoz/crows_Foundry/releases/latest/download/crows.zip",
   "esmodules": [
     "module/crows.mjs"
   ],
