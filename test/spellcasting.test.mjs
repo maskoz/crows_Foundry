@@ -462,24 +462,51 @@ describe("target lines are modelled, not pattern-matched (R:1461-1521)", () => {
 
   test("every kind it can produce is a legal schema choice", () => {
     const lines = ["1 creature", "Self", "1 obj.", "2 targets", "All creatures",
-                   "1 corpse", "", "1 ally", "1 enemy", "1 Summoned creature"];
+                   "1 corpse", "1 square", "1 space", "Varies",
+                   "", "1 ally", "1 enemy", "1 Summoned creature", "1 widget"];
     for (const line of lines) {
       assert.ok(TARGET_KINDS.includes(parseTarget(line).kind), `${line} -> ${parseTarget(line).kind}`);
     }
   });
 
-  test("a noun outside the rules' vocabulary is 'other', never a guess", () => {
+  test("location nouns (square, space, corpse, vessel/area) parse as 'location'", () => {
     for (const line of ["1 corpse", "1 square", "1 space", "1 vessel or area"]) {
       const t = parseTarget(line);
-      assert.equal(t.kind, "other", line);
+      assert.equal(t.kind, "location", line);
       assert.equal(t.text, line, "the printed line must survive the parse");
     }
+  });
+
+  test("'Varies' parses as 'varies' kind with count 0", () => {
+    const t = parseTarget("Varies");
+    assert.equal(t.kind, "varies");
+    assert.equal(t.count, 0);
+    assert.equal(t.text, "Varies");
+  });
+
+  test("a genuinely unknown noun is still 'other'", () => {
+    assert.equal(parseTarget("1 widget").kind, "other");
   });
 });
 
 describe("unparseable targets REPORT rather than resolve silently", () => {
   test("an 'other' kind is flagged for review", () => {
-    assert.equal(targetNeedsReview({ target: parseTarget("1 corpse") }), true);
+    assert.equal(targetNeedsReview({ target: parseTarget("1 widget") }), true);
+  });
+
+  test("location targets are not flagged even when the description uses 'create'", () => {
+    assert.equal(targetNeedsReview({
+      target: parseTarget("1 square"),
+      description: "<p>You create a phantom noise.</p>"
+    }), false);
+    assert.equal(targetNeedsReview({ target: parseTarget("1 corpse") }), false);
+  });
+
+  test("'Varies' targets are not flagged", () => {
+    assert.equal(targetNeedsReview({
+      target: parseTarget("Varies"),
+      description: "<p>Each target is blessed.</p>"
+    }), false);
   });
 
   test("the shipped Summon Object — the case that started this — IS flagged", () => {
@@ -514,18 +541,21 @@ describe("unparseable targets REPORT rather than resolve silently", () => {
 });
 
 describe("the shipped corpus — a detector that matches nothing is the bug", () => {
-  // Every distinct target line across the 25 spellbooks in
+  // Every distinct target line across the 27 spellbooks in
   // src/packs/crows-spellbooks, with its count. Inlined rather than read from
-  // disk so the test stays a pure unit test and still fails loudly if Wave 3
-  // introduces a line shape the parser cannot classify.
+  // disk so the test stays a pure unit test and still fails loudly if a new
+  // spell introduces a line shape the parser cannot classify.
+  // Corpus grew 25→27 with group-healing ("3 creatures") and minor-blessing
+  // ("Varies"); teleport-object changed from "1 obj." to "1 Tiny obj."
   const SHIPPED = [
-    ["1 creature", 10], ["Self", 5], ["1 obj.", 3], ["1 square", 1],
+    ["1 creature", 10], ["Self", 5], ["1 obj.", 2], ["1 square", 1],
     ["1 vessel or area", 1], ["1 corpse", 1], ["1 space", 1], ["2 targets", 1],
-    ["All creatures", 1], ["1 object", 1]
+    ["All creatures", 1], ["1 object", 1], ["1 Tiny obj.", 1],
+    ["3 creatures", 1], ["Varies", 1]
   ];
 
   test("the fixture is the whole corpus", () => {
-    assert.equal(SHIPPED.reduce((n, [, c]) => n + c, 0), 25);
+    assert.equal(SHIPPED.reduce((n, [, c]) => n + c, 0), 27);
   });
 
   test("every shipped target line parses to a legal kind", () => {
@@ -536,16 +566,16 @@ describe("the shipped corpus — a detector that matches nothing is the bug", ()
 
   test("NOT ONE shipped target line says 'Summoned' — why the regex had to go", () => {
     // This is the finding: `/summoned/i` against the free-text target line
-    // returned false for all 25 documents, including "Summon Object". The
+    // returned false for all 27 documents, including "Summon Object". The
     // detector never fired once, and nothing failed.
     for (const [line] of SHIPPED) {
       assert.equal(parseTarget(line).summoned, false, line);
     }
   });
 
-  test("the four unclassifiable lines are exactly the ones flagged for review", () => {
-    const flagged = SHIPPED.filter(([line]) => parseTarget(line).kind === "other").map(([l]) => l);
-    assert.deepEqual(flagged.sort(), ["1 corpse", "1 space", "1 square", "1 vessel or area"]);
+  test("location and varies lines are classified — zero 'other' in the corpus", () => {
+    const unclassified = SHIPPED.filter(([line]) => parseTarget(line).kind === "other").map(([l]) => l);
+    assert.deepEqual(unclassified, []);
   });
 });
 

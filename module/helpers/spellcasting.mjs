@@ -187,7 +187,8 @@ export function summonBehaviour(spellbookSystem = {}) {
  * than admitting the parse failed.
  */
 export const TARGET_KINDS = Object.freeze(
-  ["", "self", "creature", "object", "target", "ally", "enemy", "other"]);
+  ["", "self", "creature", "object", "target", "ally", "enemy",
+   "location", "varies", "other"]);
 
 /**
  * Parse a printed target line into structure, keeping the line verbatim.
@@ -231,6 +232,11 @@ export function parseTarget(text) {
   else if (/\btargets?\b/.test(lower)) out.kind = "target";
   else if (/\ball(y|ies)\b/.test(lower)) out.kind = "ally";
   else if (/\benem(y|ies)\b/.test(lower)) out.kind = "enemy";
+  // Location / environment targets — squares, spaces, areas, and corpses.
+  // These are not creatures and cannot be summoned pets.
+  else if (/\b(square|space|area|vessel|zone|corpse)\b/.test(lower)) out.kind = "location";
+  // "Varies" — tier determines the count (e.g. Minor Blessing: 0/1/2 creatures).
+  else if (/^varies$/.test(lower)) { out.kind = "varies"; out.count = 0; }
   else out.kind = "other";
 
   return out;
@@ -270,6 +276,10 @@ export function targetNeedsReview(spellbookSystem = {}, { name = "" } = {}) {
   const target = normalizeTarget(spellbookSystem?.target);
   if (target.summoned) return false;              // already stated properly
   if (target.kind === "other") return true;
+  // Location and varies targets can't produce a summoned creature — skip prose.
+  // "self" is NOT skipped: Summon Object targets self yet places a summoned
+  // object in the world, so the prose check must still catch it.
+  if (target.kind === "location" || target.kind === "varies") return false;
   const prose = `${name} ${spellbookSystem?.description ?? ""}`;
   return /\b(summons?|summoned|summoning|conjures?|creates?)\b/i.test(prose);
 }
